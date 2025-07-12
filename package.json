@@ -1,0 +1,23 @@
+{
+  "name": "analysis-api",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.1.0",
+    "express": "^5.1.0",
+    "groq": "^3.98.0",
+    "groq-sdk": "^0.26.0",
+    "multer": "^2.0.1",
+    "nodemon": "^3.1.10",
+    "xlsx": "^0.18.5"
+  }
+}
