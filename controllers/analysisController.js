@@ -12,11 +12,11 @@ exports.handleAnalysis = async (req, res) => {
     // 2. Get user query
     const { query, chartType } = req.body;
 
-    // 3. Call LLM to filter data
-    const filtered = await llmService.queryData(data, query);
+    // 3. Call LLM to analyze data
+    const analysis = await llmService.queryData(data, query, chartType);
 
-    // 4. Respond with filtered data + chartType
-    res.json({ data: filtered, chartType });
+    // 4. Respond with analysis data + chartType
+    res.json({ ...analysis, chartType });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Analysis failed' });
