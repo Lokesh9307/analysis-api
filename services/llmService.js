@@ -15,12 +15,14 @@ Given the dataset, user query, and chart type, perform an in-depth analysis incl
 - Ensuring all results are strictly derived from the dataset without inventing data or labels.
 
 Prepare the data in a format suitable for the chart type:
-- For 'pie' or 'doughnut': [{"label": "Category1", "value": 123}, {"label": "Category2", "value": 456}]
-- For 'bar' or 'column': Similar to pie, or multi-series if applicable.
-- For 'line' or 'area': [{"x": "Date1", "y": 123}, {"x": "Date2", "y": 456}], or multi-series.
-- For 'scatter' or 'bubble': [{"x": 1, "y": 123}, {"x": 2, "y": 456}]
+- For 'bar', 'column', 'pie', 'donut', 'radialBar': [{"label": "Category1", "value": 123}, {"label": "Category2", "value": 456}]
+- For 'line' or 'area': [{"label": "Date1", "value": 123}, {"label": "Date2", "value": 456}]
+- For 'scatter' or 'bubble': [{"label": 1, "value": 123}, {"label": 2, "value": 456}]
+- For 'heatmap': [{"series": "Series1", "data": [{"label": "X1", "value": 123}, ...]}]
+- For 'candlestick': Use multi-series for open, high, low, close: [{"series": "Open", "data": [{"label": "Date1", "value": open}, ...]}, {"series": "High", "data": [{"label": "Date1", "value": high}, ...]}, {"series": "Low", "data": [{"label": "Date1", "value": low}, ...]}, {"series": "Close", "data": [{"label": "Date1", "value": close}, ...]}]
 - For multi-series charts: [{"series": "Series1", "data": [{"label": "Cat1", "value": 123}, ...]}, {"series": "Series2", "data": [...]}]
 - Use numeric values where possible; use strings for dates or categories.
+- For charts like line, area, scatter, bubble, label represents the x-axis value (as string), value the y-axis value.
 
 IMPORTANT OUTPUT RULES:
 1. First, include your step-by-step reasoning inside <think>...</think> tags.
@@ -51,7 +53,7 @@ Chart Type: ${chartType}
                 { role: "user", content: userContent }
             ],
             temperature: 0.2,
-            max_completion_tokens: 4096,
+            max_tokens: 4096,
             top_p: 0.95,
             stream: true,
         });
@@ -89,6 +91,24 @@ Chart Type: ${chartType}
         try {
             const parsedJson = JSON.parse(jsonString);
             console.log("Successfully parsed JSON:", parsedJson);
+
+            // Post-process for candlestick if necessary
+            if (chartType === 'candlestick' && Array.isArray(parsedJson.data) && parsedJson.data.length > 0 && Array.isArray(parsedJson.data[0].value)) {
+                const data = parsedJson.data;
+                const newData = [];
+                ['open', 'high', 'low', 'close'].forEach((key, idx) => {
+                    newData.push({
+                        series: key.charAt(0).toUpperCase() + key.slice(1),
+                        data: data.map(p => ({
+                            label: p.label,
+                            value: p.value[idx]
+                        }))
+                    });
+                });
+                parsedJson.data = newData;
+                console.log("Post-processed candlestick data:", parsedJson.data);
+            }
+
             return { ...parsedJson, reasoning };
         } catch (e) {
             console.warn("Direct JSON parse failed:", e.message);
@@ -96,6 +116,24 @@ Chart Type: ${chartType}
                 const fixedJson = jsonrepair(jsonString);
                 const parsedJson = JSON.parse(fixedJson);
                 console.log("Successfully repaired and parsed JSON:", parsedJson);
+
+                // Post-process for candlestick if necessary
+                if (chartType === 'candlestick' && Array.isArray(parsedJson.data) && parsedJson.data.length > 0 && Array.isArray(parsedJson.data[0].value)) {
+                    const data = parsedJson.data;
+                    const newData = [];
+                    ['open', 'high', 'low', 'close'].forEach((key, idx) => {
+                        newData.push({
+                            series: key.charAt(0).toUpperCase() + key.slice(1),
+                            data: data.map(p => ({
+                                label: p.label,
+                                value: p.value[idx]
+                            }))
+                        });
+                    });
+                    parsedJson.data = newData;
+                    console.log("Post-processed candlestick data:", parsedJson.data);
+                }
+
                 return { ...parsedJson, reasoning };
             } catch (repairErr) {
                 console.error("Repair failed:", repairErr.message);
